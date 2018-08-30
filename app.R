@@ -35,7 +35,7 @@ ui <- dashboardPage(skin="black", title="Metabolomics",
                         tags$style(HTML("
       .tabbable > .nav > li[class=active]    > a {background-color: #444444; color:white}
       .multicol{
-      -webkit-column-count: 4; /* Chrome, Safari, Opera */
+      -webkit-column-count: 4; /Inpo* Chrome, Safari, Opera */
       -moz-column-count: 4; /* Firefox */
       column-count: 4;
       }
@@ -74,7 +74,7 @@ server <- function(input, output){
   output$metab_go_ui <- renderUI({
     b <- c(input$metab_file$name)
     if(length(b) == 1){
-      actionButton("metab_merge","Inport Data")
+      actionButton("metab_merge","Import Data")
     }
   })
   
