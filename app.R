@@ -35,7 +35,7 @@ ui <- dashboardPage(skin="black", title="Metabolomics",
                         tags$style(HTML("
       .tabbable > .nav > li[class=active]    > a {background-color: #444444; color:white}
       .multicol{
-      -webkit-column-count: 4; /Inpo* Chrome, Safari, Opera */
+      -webkit-column-count: 4; /* Chrome, Safari, Opera */
       -moz-column-count: 4; /* Firefox */
       column-count: 4;
       }
