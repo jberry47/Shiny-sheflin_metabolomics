@@ -52,7 +52,13 @@ ui <- dashboardPage(skin="black", title="Metabolomics",
       color: red;
       }"
                         )),
-                        tabItem(tabName = "get_started",
+                        tabItems(
+                          tabItem(tabName = "overview",
+                            box(width=10,title = "Test Box",solidHeader = T,status = 'success',collapsible = TRUE,
+                              p("test")
+                            )
+                          ),
+                          tabItem(tabName = "get_started",
                                 box(width=10,title = "Import File",solidHeader = T,status = 'success',collapsible = TRUE,
                                     fileInput("metab_file", "Choose file",
                                               multiple = F,
@@ -61,6 +67,7 @@ ui <- dashboardPage(skin="black", title="Metabolomics",
                                 ),
                                 uiOutput("meta_parse"),
                                 uiOutput("pca_output")
+                          )
                         )
                       )
                     )
@@ -71,7 +78,7 @@ server <- function(input, output){
   output$metab_go_ui <- renderUI({
     b <- c(input$metab_file$name)
     if(length(b) == 1){
-      actionButton("metab_merge","Merge Data")
+      actionButton("metab_merge","Inport Data")
     }
   })
   
@@ -105,9 +112,11 @@ server <- function(input, output){
   
   output$pca_output <- renderUI({
     if(!is.null(meta_sub$data)){
-      box(style = "overflow-y:scroll",width = 5,title = "PCA plots",solidHeader = T,status = 'success',collapsible = TRUE,
+      box(style = "overflow-y:scroll",width = 7,title = "PCA plots",solidHeader = T,status = 'success',collapsible = TRUE,
           selectInput("pca_color_by",width = 300,label = "Color By",choices = colnames(meta_sub$data[1:11]),selected = "genotype"),
-          plotOutput("pca_plot_ind")
+          plotOutput("pca_plot_ind"),
+          textInput("pca_plot_name","Plot Name (ex: E17_leafOnly_cbTreatment.png)",width=400),
+          downloadButton("pca_download","Download Plot")
       )
     }
   })
@@ -122,7 +131,7 @@ server <- function(input, output){
     list(pca_df,varexp)
   })
   
-  output$pca_plot_ind <- renderPlot({
+  pca_plot <- reactive({
     pca_df <- pca_df()
     ggplot(data=pca_df[[1]], aes(PC1,PC2))+
       geom_point(aes(color=Treatment),alpha=0.6,size=2)+
@@ -133,13 +142,24 @@ server <- function(input, output){
       geom_hline(yintercept = 0,linetype="dashed")+
       theme_bw()+
       theme(strip.background=element_rect(fill="gray50"),
-            strip.text.x=element_text(size=14,color="white"),
-            strip.text.y=element_text(size=14,color="white"))+
+        strip.text.x=element_text(size=14,color="white"),
+        strip.text.y=element_text(size=14,color="white"))+
       theme(axis.text = element_text(size = 14),
-            axis.title= element_text(size = 18))+
+        axis.title= element_text(size = 18))+
       theme(axis.ticks.length=unit(0.2,"cm"))+
       theme(panel.border = element_rect(colour = "gray60", fill=NA, size=1,linetype = 1))
   })
+  
+  output$pca_plot_ind <- renderPlot({
+    pca_plot()
+  })
+  
+  output$pca_download <- downloadHandler(
+    filename = function() {input$pca_plot_name},
+    content=function(file){
+      ggsave(file,pca_plot(),device = "png",width = 6,height = 5,dpi = 300)
+    }
+  )
   
 }
 
