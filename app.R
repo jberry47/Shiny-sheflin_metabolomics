@@ -109,7 +109,7 @@ server <- function(input, output){
   
   output$pca_output <- renderUI({
     if(!is.null(meta_sub$data)){
-      box(style = "overflow-y:scroll",width = 7,title = "PCA plots",solidHeader = T,status = 'success',collapsible = TRUE,
+      box(style = "overflow-y:scroll",width = 7,title = "SIMCA plots",solidHeader = T,status = 'success',collapsible = TRUE,
           column(width = 6,
               selectInput("simca_grouping_1",width = 280,label = "Grouping 1",choices = colnames(meta_sub$data[1:11]),selected = "genotype")
           ),
