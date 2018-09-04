@@ -110,52 +110,61 @@ server <- function(input, output){
   output$pca_output <- renderUI({
     if(!is.null(meta_sub$data)){
       box(style = "overflow-y:scroll",width = 7,title = "PCA plots",solidHeader = T,status = 'success',collapsible = TRUE,
-          selectInput("pca_color_by",width = 300,label = "Color By",choices = colnames(meta_sub$data[1:11]),selected = "genotype"),
-          plotOutput("pca_plot_ind"),
-          textInput("pca_plot_name","Plot Name (ex: E17_leafOnly_cbTreatment.png)",width=400),
-          downloadButton("pca_download","Download Plot")
+          column(width = 6,
+              selectInput("simca_grouping_1",width = 280,label = "Grouping 1",choices = colnames(meta_sub$data[1:11]),selected = "genotype")
+          ),
+          column(width = 6,
+                 selectInput("simca_grouping_2",width = 280,label = "Grouping 2",choices = colnames(meta_sub$data[1:11]),selected = "treatment")
+          ),
+          column(width = 12,
+                 hr(),
+                 plotOutput("simca_plot_ind"),
+                 hr()
+          ),
+          textInput("simca_plot_name","Plot Name (ex: E17_leafOnly_cbTreatment.png)",width=400),
+          downloadButton("simca_download","Download Plot")
       )
     }
   })
   
-  pca_df <- reactive({
+  simca_df <- reactive({
     comps <- meta_sub$data
-    pca <- PCA(comps[,12:ncol(comps)],graph = F)
-    pca_df <- data.frame("Treatment"=comps[,input$pca_color_by],
-                         "PC1"=pca$ind$coord[,1],
-                         "PC2"=pca$ind$coord[,2])
-    varexp <- signif(c(pca$eig[1,2],pca$eig[2,2]),3)
-    list(pca_df,varexp)
+    simca <- simca(comps[,12:ncol(comps)],"blah",scale = T)
+    df <- data.frame(predict(simca, comps[,12:ncol(comps)])$scores[,1:2],stringsAsFactors = F)
+    df$Grouping1 <- comps[,input$simca_grouping_1]
+    df$Grouping2 <- comps[,input$simca_grouping_2]
+    varexp <- signif(100*c(simca$eigenvals[1]/sum(simca$eigenvals),simca$eigenvals[2]/sum(simca$eigenvals)),4)
+    list(df,varexp)
   })
   
-  pca_plot <- reactive({
-    pca_df <- pca_df()
-    ggplot(data=pca_df[[1]], aes(PC1,PC2))+
-      geom_point(aes(color=Treatment),alpha=0.6,size=2)+
-      stat_ellipse(aes(fill=Treatment,color=Treatment),geom = "polygon",alpha=0.25)+
-      xlab(paste("PC1 (",pca_df[[2]][1],"%)",sep = ""))+
-      ylab(paste("PC2 (",pca_df[[2]][2],"%)",sep = ""))+
+  simca_plot <- reactive({
+    simca_df <- simca_df()
+    ggplot(data=simca_df[[1]], aes(Comp.1,Comp.2))+
+      stat_ellipse(color="gray40",fill="white",geom = "polygon",type = "norm")+
+      geom_point(aes(color=Grouping2,shape=Grouping1),alpha=0.6,size=4)+
+      xlab(paste("Component 1 (",simca_df[[2]][1],"%)",sep = ""))+
+      ylab(paste("Component 2 (",simca_df[[2]][2],"%)",sep = ""))+
       geom_vline(xintercept = 0,linetype="dashed")+
       geom_hline(yintercept = 0,linetype="dashed")+
       theme_bw()+
+      theme(panel.background = element_rect(fill = "gray95"))+
       theme(strip.background=element_rect(fill="gray50"),
-        strip.text.x=element_text(size=14,color="white"),
-        strip.text.y=element_text(size=14,color="white"))+
+            strip.text.x=element_text(size=14,color="white"),
+            strip.text.y=element_text(size=14,color="white"))+
       theme(axis.text = element_text(size = 14),
-        axis.title= element_text(size = 18))+
-      theme(axis.ticks.length=unit(0.2,"cm"))+
-      theme(panel.border = element_rect(colour = "gray60", fill=NA, size=1,linetype = 1))
+            axis.title= element_text(size = 18))+
+      theme(axis.ticks.length=unit(0.2,"cm"))
+    })
+  
+  output$simca_plot_ind <- renderPlot({
+    simca_plot()
   })
   
-  output$pca_plot_ind <- renderPlot({
-    pca_plot()
-  })
-  
-  output$pca_download <- downloadHandler(
+  output$simca_download <- downloadHandler(
     
-    filename = function() {input$pca_plot_name},
+    filename = function() {input$simca_plot_name},
     content=function(file){
-      ggsave(file,pca_plot(),device = "png",width = 6,height = 5,dpi = 300)
+      ggsave(file,simca_plot(),device = "png",width = 6,height = 5,dpi = 300)
     }
   )
   
