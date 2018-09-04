@@ -1,16 +1,17 @@
-library("reshape2")
-library("grid")
-library("scales")
-library("gridExtra")
-library("shiny")
-library("shinyBS")
-library("shinydashboard")
-library("DT")
-library("shinyjs")
-library("plyr")
-library("ggplot2")
-library("FactoMineR")
-library("factoextra")
+library(reshape2)
+library(grid)
+library(scales)
+library(gridExtra)
+library(shiny)
+library(shinyBS)
+library(shinydashboard)
+library(DT)
+library(shinyjs)
+library(plyr)
+library(ggplot2)
+library(FactoMineR)
+library(factoextra)
+library(mdatools)
 
 ui <- dashboardPage(skin="black", title="Metabolomics",
                     dashboardHeader(
@@ -151,6 +152,7 @@ server <- function(input, output){
   })
   
   output$pca_download <- downloadHandler(
+    
     filename = function() {input$pca_plot_name},
     content=function(file){
       ggsave(file,pca_plot(),device = "png",width = 6,height = 5,dpi = 300)
