@@ -122,7 +122,9 @@ server <- function(input, output){
                  hr()
           ),
           textInput("simca_plot_name","Plot Name (ex: E17_leafOnly_cbTreatment.png)",width=400),
-          downloadButton("simca_download","Download Plot")
+          downloadButton("simca_download","Download Plot"),
+          br(),
+          downloadButton("data_download","Download Data (tsv)")
       )
     }
   })
@@ -136,6 +138,11 @@ server <- function(input, output){
     varexp <- signif(100*c(simca$eigenvals[1]/sum(simca$eigenvals),simca$eigenvals[2]/sum(simca$eigenvals)),4)
     list(df,varexp)
   })
+  
+  simca_data <- reactive({
+    cbind(meta_sub$data[,1:11],simca_df())
+  })
+  
   
   simca_plot <- reactive({
     simca_df <- simca_df()
@@ -161,13 +168,19 @@ server <- function(input, output){
   })
   
   output$simca_download <- downloadHandler(
-    
     filename = function() {input$simca_plot_name},
     content=function(file){
       ggsave(file,simca_plot(),device = "png",width = 6,height = 5,dpi = 300)
     }
   )
   
+  output$data_download <- downloadHandler(
+    filename = function() {"metabolomics_simca_data.tsv"},
+    content = function(file){
+      head(simca_data())
+      write.table(simca_data(),file,row.names = FALSE, quote = FALSE,sep = "\t")
+    }
+  )
   
 }
 
