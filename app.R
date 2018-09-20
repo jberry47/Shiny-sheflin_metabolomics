@@ -140,7 +140,7 @@ server <- function(input, output){
   })
   
   simca_data <- reactive({
-    cbind(meta_sub$data[,1:11],simca_df())
+    cbind(meta_sub$data[,1:11],simca_df()[[1]])
   })
   
   
