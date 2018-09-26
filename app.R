@@ -116,6 +116,12 @@ server <- function(input, output){
           column(width = 6,
                  selectInput("simca_grouping_2",width = 280,label = "Grouping 2",choices = colnames(meta_sub$data[1:11]),selected = "treatment")
           ),
+          column(width = 6,
+                 selectInput("simca_x_axis",width = 280, label = "X-Axis",choices = c("Component 1", "Component 2", "Component 3", "Component 4", "Component 5", "Component 6", "Component 7", "Component 8", "Component 9", "Component 10", "Component 11", "Component 12", "Component 13", "Component 14", "Component 15"), selected = "Component 1")
+          ),
+          column(width = 6,
+                 selectInput("simca_y_axis",width = 280, label = "Y-Axis",choices = c("Component 1", "Component 2", "Component 3", "Component 4", "Component 5", "Component 6", "Component 7", "Component 8", "Component 9", "Component 10", "Component 11", "Component 12", "Component 13", "Component 14", "Component 15"), selected = "Component 2")
+          ),
           column(width = 12,
                  hr(),
                  plotOutput("simca_plot_ind"),
@@ -130,12 +136,14 @@ server <- function(input, output){
   })
   
   simca_df <- reactive({
+    x <- as.numeric(strsplit(input$simca_x_axis," ")[[1]][2])
+    y <- as.numeric(strsplit(input$simca_y_axis," ")[[1]][2])
     comps <- meta_sub$data
     simca <- simca(comps[,12:ncol(comps)],"blah",scale = T)
-    df <- data.frame(predict(simca, comps[,12:ncol(comps)])$scores[,1:2],stringsAsFactors = F)
+    df <- data.frame(predict(simca, comps[,12:ncol(comps)])$scores[,c(x,y)],stringsAsFactors = F)
     df$Grouping1 <- comps[,input$simca_grouping_1]
     df$Grouping2 <- comps[,input$simca_grouping_2]
-    varexp <- signif(100*c(simca$eigenvals[1]/sum(simca$eigenvals),simca$eigenvals[2]/sum(simca$eigenvals)),4)
+    varexp <- signif(100*simca$eigenvals[c(x,y)]/sum(simca$eigenvals),4)
     list(df,varexp)
   })
   
@@ -146,11 +154,11 @@ server <- function(input, output){
   
   simca_plot <- reactive({
     simca_df <- simca_df()
-    ggplot(data=simca_df[[1]], aes(Comp.1,Comp.2))+
+    ggplot(data=simca_df[[1]], aes_string(colnames(simca_df[[1]])[1],colnames(simca_df[[1]])[2]))+
       stat_ellipse(color="gray40",fill="white",geom = "polygon",type = "norm")+
       geom_point(aes(color=Grouping2,shape=Grouping1),alpha=0.6,size=4)+
-      xlab(paste("Component 1 (",simca_df[[2]][1],"%)",sep = ""))+
-      ylab(paste("Component 2 (",simca_df[[2]][2],"%)",sep = ""))+
+      xlab(paste(gsub("Comp.","Component ",colnames(simca_df[[1]])[1])," (",simca_df[[2]][1],"%)",sep = ""))+
+      ylab(paste(gsub("Comp.","Component ",colnames(simca_df[[1]])[2])," (",simca_df[[2]][2],"%)",sep = ""))+
       geom_vline(xintercept = 0,linetype="dashed")+
       geom_hline(yintercept = 0,linetype="dashed")+
       theme_bw()+
