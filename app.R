@@ -135,12 +135,20 @@ server <- function(input, output){
     }
   })
   
+  x <- reactive({
+    as.numeric(strsplit(input$simca_x_axis," ")[[1]][2])
+  })
+  
+  y <- reactive({
+    as.numeric(strsplit(input$simca_y_axis," ")[[1]][2])
+  })
+  
   simca_df <- reactive({
-    x <- as.numeric(strsplit(input$simca_x_axis," ")[[1]][2])
-    y <- as.numeric(strsplit(input$simca_y_axis," ")[[1]][2])
+    x <- x()
+    y <- y()
     comps <- meta_sub$data
     simca <- simca(comps[,12:ncol(comps)],"blah",scale = T)
-    df <- data.frame(predict(simca, comps[,12:ncol(comps)])$scores[,c(x,y)],stringsAsFactors = F)
+    df <- data.frame(predict(simca, comps[,12:ncol(comps)])$scores[,1:15],stringsAsFactors = F)
     df$Grouping1 <- comps[,input$simca_grouping_1]
     df$Grouping2 <- comps[,input$simca_grouping_2]
     varexp <- signif(100*simca$eigenvals[c(x,y)]/sum(simca$eigenvals),4)
@@ -153,12 +161,14 @@ server <- function(input, output){
   
   
   simca_plot <- reactive({
+    x <- x()
+    y <- y()
     simca_df <- simca_df()
-    ggplot(data=simca_df[[1]], aes_string(colnames(simca_df[[1]])[1],colnames(simca_df[[1]])[2]))+
+    ggplot(data=simca_df[[1]], aes_string(colnames(simca_df[[1]])[x],colnames(simca_df[[1]])[y]))+
       stat_ellipse(color="gray40",fill="white",geom = "polygon",type = "norm")+
       geom_point(aes(color=Grouping2,shape=Grouping1),alpha=0.6,size=4)+
-      xlab(paste(gsub("Comp.","Component ",colnames(simca_df[[1]])[1])," (",simca_df[[2]][1],"%)",sep = ""))+
-      ylab(paste(gsub("Comp.","Component ",colnames(simca_df[[1]])[2])," (",simca_df[[2]][2],"%)",sep = ""))+
+      xlab(paste(gsub("Comp.","Component ",colnames(simca_df[[1]])[x])," (",simca_df[[2]][1],"%)",sep = ""))+
+      ylab(paste(gsub("Comp.","Component ",colnames(simca_df[[1]])[y])," (",simca_df[[2]][2],"%)",sep = ""))+
       geom_vline(xintercept = 0,linetype="dashed")+
       geom_hline(yintercept = 0,linetype="dashed")+
       theme_bw()+
